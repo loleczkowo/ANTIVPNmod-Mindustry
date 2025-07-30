@@ -17,8 +17,7 @@ public class ANTIVPN extends Mod {
         Events.on(PlayerConnect.class, event -> {
             Player p = event.player;
             String ip = p.con.address;
-
-            Log.info("Connection attempt: @ from @", p.name, ip);
+            Log.info("ANTIVPN check attempt: @ from @", p.name, ip);
 
             if (isUsingVPN(ip)) {
                 p.kick("VPN connections are not allowed.");
@@ -30,17 +29,22 @@ public class ANTIVPN extends Mod {
     private boolean isUsingVPN(String host) {
         try {
             Process proc = new ProcessBuilder(
-                "nmap", "-sV", "-Pn", "--version-intensity", "5",
-                "--max-retries", "1", "--host-timeout", "15s",
+                "nmap", "-sV", "-Pn",
+                "--version-intensity", "5",
+                "--max-retries", "1",
+                "--host-timeout", "15s",
                 "-p", "443", host
             ).redirectErrorStream(true).start();
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    Log.info("VPN check output: @", line);
-                    if (line.matches("^443/tcp\\s+open\\s+openvpn.*")) {
-                        return true;
+                    if (line.startsWith("443/tcp")) {
+                        // debug: Log.info("VPN check output: @", line);
+                        if (line.matches("^443/tcp\\s+open\\s+openvpn.*")) {
+                            return true;
+                        }
+                        break;
                     }
                 }
             }
