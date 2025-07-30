@@ -5,7 +5,7 @@ author: "loleczkowo"
 main: antivpn.ANTIVPN
 
 description: "Blocks VPN's by loleczkowo"
-version: "1.1"
+version: "1.2"
 minGameVersion: 145
 java: true
 server: true
