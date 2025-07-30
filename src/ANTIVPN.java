@@ -5,6 +5,8 @@ import arc.Events;
 import mindustry.game.EventType.PlayerConnect;
 import mindustry.gen.Player;
 import arc.util.Log;
+import mindustry.Vars;
+import mindustry.mod.Mods;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,7 +32,9 @@ public class ANTIVPN extends Mod {
     // Calls the Python script to check if IP is OpenVPN
     private boolean isUsingVPN(String host) {
         try {
-            String scriptPath = "/home/loleczkowo/mindustryTestserv/config/mods/antivpn.py";
+            Mods.ModMeta meta = Vars.mods.getMod(ANTIVPN.class).meta;
+            String scriptPath = Vars.mods.getMod(ANTIVPN.class).root.child("antivpn.py").file().getAbsolutePath();
+
             Process proc = new ProcessBuilder("python3", scriptPath, host)
                     .redirectErrorStream(true)
                     .start();
