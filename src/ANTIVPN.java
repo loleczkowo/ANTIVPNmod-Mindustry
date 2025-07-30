@@ -30,26 +30,30 @@ public class ANTIVPN extends Mod {
     // Calls the Python script to check if IP is OpenVPN
     private boolean isUsingVPN(String host) {
         try {
-            // Path where the script will be on the server
             String scriptPath = "/home/loleczkowo/mindustryTestserv/config/mods/antivpn.py";
-
             Process proc = new ProcessBuilder("python3", scriptPath, host)
                     .redirectErrorStream(true)
                     .start();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             String line;
+            boolean vpnDetected = false;
+
             while ((line = reader.readLine()) != null) {
+                Log.info("VPN check output: @", line);
                 if (line.contains("VPN:TRUE")) {
-                    return true;
+                    vpnDetected = true;
                 }
             }
+
             proc.waitFor();
+            return vpnDetected;
         } catch (Exception e) {
             Log.err("VPN check failed for @: @", host, e.getMessage());
         }
         return false;
     }
+
 
     @Override
     public void loadContent() {

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-import sys, subprocess, shlex, re
+import sys
+import subprocess
+import shlex
+import re
 
-def is_openvpn(host: str, port: int = 443, host_timeout: int = 15) -> bool:
+def is_openvpn(host: str, port: int = 443, host_timeout: int = 15):
     cmd = (
         f'nmap -sV -Pn --version-intensity 5 --max-retries 1 '
         f'--host-timeout {host_timeout}s -p {port} {host}'
@@ -12,12 +15,26 @@ def is_openvpn(host: str, port: int = 443, host_timeout: int = 15) -> bool:
         )
     except subprocess.CalledProcessError as e:
         out = e.output
-    pat = rf'^{port}/tcp\s+open\s+openvpn\b'
-    return re.search(pat, out, re.IGNORECASE | re.MULTILINE) is not None
+
+    # Match service line for the port
+    pat = rf'^{port}/tcp\s+(open|closed|filtered)\s+(\S+)'
+    m = re.search(pat, out, re.IGNORECASE | re.MULTILINE)
+
+    if m:
+        state, service = m.groups()
+        if service.lower() == "openvpn":
+            print(f"VPN:TRUE ({service})")
+            return True
+        else:
+            print(f"VPN:FALSE ({service})")
+            return False
+    else:
+        print("VPN:UNKNOWN (no service detected)")
+        return False
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: antivpn.py <IP>")
+        sys.exit(1)
     host = sys.argv[1]
-    if is_openvpn(host):
-        print("VPN:TRUE")
-    else:
-        print("VPN:FALSE")
+    is_openvpn(host)
