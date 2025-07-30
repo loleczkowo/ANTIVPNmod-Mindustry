@@ -5,8 +5,6 @@ import arc.Events;
 import mindustry.game.EventType.PlayerConnect;
 import mindustry.gen.Player;
 import arc.util.Log;
-import mindustry.Vars;
-import mindustry.mod.Mods;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -29,29 +27,24 @@ public class ANTIVPN extends Mod {
         });
     }
 
-    // Calls the Python script to check if IP is OpenVPN
     private boolean isUsingVPN(String host) {
         try {
-            Mods.ModMeta meta = Vars.mods.getMod(ANTIVPN.class).meta;
-            String scriptPath = Vars.mods.getMod(ANTIVPN.class).root.child("antivpn.py").file().getAbsolutePath();
+            Process proc = new ProcessBuilder(
+                "nmap", "-sV", "-Pn", "--version-intensity", "5",
+                "--max-retries", "1", "--host-timeout", "15s",
+                "-p", "443", host
+            ).redirectErrorStream(true).start();
 
-            Process proc = new ProcessBuilder("python3", scriptPath, host)
-                    .redirectErrorStream(true)
-                    .start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            String line;
-            boolean vpnDetected = false;
-
-            while ((line = reader.readLine()) != null) {
-                Log.info("VPN check output: @", line);
-                if (line.contains("VPN:TRUE")) {
-                    vpnDetected = true;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    Log.info("VPN check output: @", line);
+                    if (line.matches("^443/tcp\\s+open\\s+openvpn.*")) {
+                        return true;
+                    }
                 }
             }
-
             proc.waitFor();
-            return vpnDetected;
         } catch (Exception e) {
             Log.err("VPN check failed for @: @", host, e.getMessage());
         }
